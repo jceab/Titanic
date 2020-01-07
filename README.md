@@ -15,9 +15,9 @@ La actividad ha sido realizada por **Elisa Fernández Maraver** (elisafm4) y **F
 ## Ficheros
 
 * **code/PRAC2-Tipologia.rmd**: código principal del programa.
-* **code/PRAC2-Tipologia.html**: archivo html que contiene la realización de la práctica.
 * **data/train.csv**: juego de datos original descargado de la plataforma Kaggle.
 * **data/data_clean.csv**: juego de datos generado después de las tareas de preprocesamiento.
+* **PRAC2-Tipologia.html**: archivo html que contiene la realización de la práctica.
 
 ## Bibliografía
 
