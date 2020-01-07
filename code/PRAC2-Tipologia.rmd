@@ -153,9 +153,9 @@ Es por ello, que a pesar de que no sean los objetivos de la presente práctica, 
 ## Integración y selección de los datos de interés a analizar.
 ***
 
-El arvhivo descargado está formado por tres documentos .csv:
+El arvhivo descargado está formado por tres documentos *.csv*:
 
-+ train: son los datos de entrenamiento, formados por 12 atributos (columnas) y 891 registros (filas). Su finalidad es la construcción del modelo de aprendizaje automático entorno a la variable *survived.
++ train: son los datos de entrenamiento, formados por 12 atributos (columnas) y 891 registros (filas). Su finalidad es la construcción del modelo de aprendizaje automático entorno a la variable *survived*.
 
 + test: corresponde a los datos de validación, para comprobar la bondad del modelo. Como son los utilizados para predecir, no incluye la variable objetivo, por consiguiente, está formado por 11 atributos y 418 registros.
 
@@ -167,19 +167,15 @@ Como el objetivo de esta práctica no es más que el preprocesado y análisis de
 ## Limpieza de los datos
 ***
 
-Es esta sección se va a realizar una limpieza de los datos. Lo primero es cargar los ficheros mediante la función `read.csv()` y unirlos en un único dataset.
+Es esta sección se va a realizar una limpieza de los datos. Lo primero es cargar los ficheros mediante la función `read.csv()`.Como se ha comentado, en este caso sólo nos interesa el conjunto de *train*.
 
 ```{r}
 # Lectura de los datos
-train <- read.csv(file="train.csv", header=TRUE, sep=",", strip.white=TRUE, encoding="UTF-8")
+data <- read.csv(file="train.csv", header=TRUE, sep=",", strip.white=TRUE, encoding="UTF-8")
 
-test <- read.csv(file="test.csv", header=TRUE, sep=",", strip.white=TRUE, encoding="UTF-8")
 ```
 
-Una vez leídos, se unifican ambos dataset en uno solo, **data**, dimensionándolo con la estructura del dataset **train**.
-
 ```{r warning=FALSE}
-data <- bind_rows(train, test)
 rows = dim(data)
 
 # Se puede tener una idea de la distribución del dataset
@@ -251,9 +247,7 @@ Es muy importante conocer si existen valores nulos (campos vacíos) y la distrib
 colSums(is.na(data_filt))
 ```
 
-Como era de esperar, se observan los 418 registros procedentes del archivo **test.csv** que no tienen valores para el atributo **Survived**. Por lo tanto, se procede a su eliminación, puesto que **Survived** es un atributo esencial en el que se centra el estudio de los datos, y haciéndolo, aún habría datos suficientes para obtener conclusiones sin sesgar los resultados. 
-
-Por otro lado, hay un total de 263 pasajeros para los cuales se desconoce su edad y el precio que pagaron por su billete billete.
+Hay un total de 263 pasajeros para los cuales se desconoce su edad.
 
 ```{r}
 colSums(data_filt == "")
@@ -265,29 +259,17 @@ Por otro lado, **Embarked** presenta 2 valores nulos.
 colSums(data_filt == " ")
 ```
 
-En definitiva, hay 3 tipos de valores vacíos que tratar:
-
-1. **Survived**: van a ser eliminadas directamente las filas correspondientes a ella puesto que al tratarse de la variable de interés, no puede estar sesgada.
-
-2. **Age**: hay que estudiar si corresponde por ejemplo a bebés menores de un año, por lo que su valor sería 0, o bien han de ser estimados. Como se trata de un número alto de valores nulos hay que tratarlos con precuaución.
-
-3. **Fare** y **Embarked**: el número de valores nulos es muy bajo, por lo que se va a optar por sustituir dicho valor por la media y moda, respectivamente de los atributos.
-
-```{r}
-# Se eliminan los datos de test
-data_filt <- data_filt[which(data_filt$Survived != "NA"),]
-
-# Nueva búsqueda
-colSums(is.na(data_filt))
-
-colSums(data_filt=="")
-```
-
 ```{r}
 aggr(data_filt, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(data_filt), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"));
 ```
 
-El valor vacío encontrado en el atributo **Fare** no se considera ya que corresponde a un registro procedente del archivo **test.csv**, de manera que se ha eliminado con el borrado de estos. Sin embargo, en el atributo **Embarked** hay dos registros vacíos para los que se les asigna el valor de la moda del atributo, C (Cherbourg).
+En definitiva, hay 2 tipos de valores vacíos que tratar:
+
+1. **Age**: hay que estudiar si corresponde por ejemplo a bebés menores de un año, por lo que su valor sería 0, o bien han de ser estimados. Como se trata de un número alto de valores nulos hay que tratarlos con precuaución.
+
+2. **Embarked**: el número de valores nulos es muy bajo, por lo que se va a optar por sustituir dicho valor por la moda, al tratarse de una variable categórica.
+
+En el atributo **Embarked** hay dos registros vacíos para los que se les asigna el valor de la moda del atributo, C (Cherbourg).
 
 ```{r}
 get_mode <- function(x) {
@@ -309,7 +291,6 @@ temp_data <- mice(data = data_filt, m = 5, method = "pmm", maxit = 50, seed = 50
 # Se completa el dataset, ya no hay más valores nulos.
 data_filt <- complete(temp_data,1)
 ```
-
 Una vez gestionados los datos vacíos o nulos, el dataset tiene las siguientes características:
 
 ```{r}
@@ -482,10 +463,9 @@ En este caso se cuenta con una muestra de la población total de pasajeros que v
 
 El análisis de correlación consiste en un procedimiento estadístico para determinar si dos variables están relacionadas o no. El resultado del análisis es un coeficiente de correlación  que tomará valores entre -1 y +1.  El signo indica el  tipo de correlación entre las dos variables . Un signo positivo indica que existe una relación positiva entre las dos variables, mientras que un signo negativo indica justamente lo contrario. En el caso de que dos variables sean independientes entre sí, su coeficiente de correlación tomará el valor de cero . 
 
-Aplicamos este análisis de correlación entre las variables cuantitativas de nuestro dataset: **Age**, **SibSp**, **Parch** y **Fare**. 
+Este análisis de correlación se aplica entre las variables cuantitativas de nuestro dataset: **Age**, **SibSp**, **Parch** y **Fare**. 
 
-Debido a que estos atributos no cumplen la condición de normalidad tal y como calculamos en apartados anteriores, se deberá aplicar el test no paramétrico del **rango de correlación de Spearman**.
-
+Debido a que estos atributos no cumplen la condición de normalidad tal y como se ha calcuado en apartados anteriores, se deberá aplicar el test no paramétrico del **rango de correlación de Spearman**.
 
 ```{r warning=FALSE}
 # Calculamos la matriz de correlaciones
@@ -496,22 +476,22 @@ data.cor
 corrplot(data.cor)
 ```
 
-A través del anterior gráfico de la matriz de correlaciones, podemos conlcuir que las correlaciones entre las variables **SurvivedR** y el resto de variables cuantitativas es muy débil. Encontramos el mayor grado de correlación entre las variables **SibSp** y **Parch**, con un valor de 0.45.
+A través del anterior gráfico de la matriz de correlaciones, se puede conlcuir que las correlaciones entre las variables **SurvivedR** y el resto de variables cuantitativas es muy débil. El mayor grado de correlación puede ser encontrado entre las variables **SibSp** y **Parch**, con un valor de 0.45.
 Tampoco se observa por ejemplo que exista una correlación significativa entre las variables **Age** y **Fare**.
 
 ***
 ### Contraste de hipótesis
 ***
 
-Continuamos el análisis estadístico realizando un contraste de hipótesis. Queremos saber si existen diferencias en los precios de los billetedes dependiendo del sexo del pasajero. 
+A continuación, se realiza un análisis estadístico basado un contraste de hipótesis, con el objetivo de conocer si existen diferencias en los precios de los billetes dependiendo del sexo del pasajero. 
 
 ```{r}
-# Separamos nuestro juego de datos en dos grupos, dependiendo del sexo del pasajero
+# Se separa el juego de datos en dos grupos, dependiendo del sexo del pasajero
 price_male <- data_filt[data_filt$Sex == "male",]$Fare
 price_female <- data_filt[data_filt$Sex == "female",]$Fare
 ```
 
-Nuevamente, tenemos que hacer referencia a la necesidad de aplicar un test no paramétrico debido a la asuencia de normalidad calculada en apartados anteriores. Por ello, se decide utilizar el **test U de Mann-Whitney** para dos muestras independientes.
+Nuevamente, es necesario hacer referencia a la necesidad de aplicar un test no  paramétrico debido a la asuencia de normalidad calculada en apartados anteriores. Por ello, se decide utilizar el **test U de Mann-Whitney** para dos muestras independientes.
 
 Como se parte del supuesto establecido en el que los datos no presentan una distribución normal, las hipótesis planteadas se hacen en base a las medianas $Me$.
 
@@ -521,7 +501,7 @@ Como se parte del supuesto establecido en el que los datos no presentan una dist
 H~0~ : $Me$~F~ = $Me$~M~ <br/>
 H~1~ : $Me$~F~ $\neq$ $Me$~M~ <br/>
 
-En este caso nos encontramos ante un un contraste bilateral para la hipótesis alternativa planteada.
+Este caso se trata de un contraste bilateral para la hipótesis alternativa planteada.
 
 
 ```{r, eval=TRUE, echo=TRUE}
@@ -529,9 +509,9 @@ testU <- wilcox.test(price_male, price_female, alternative = "two.sided", paired
 testU
 ```
 
-Observamos que el p-valor obtenido tras la aplicación del test es inferior al nivel de significación por defecto de $\alpha$ = 0.05. Es por ello que podemos concluir que se rechaza la hipótesis nula H~0~, es decir, sí que existirían diferencias significativas en los precios de los billetes dependiendo del sexo del pasajero.
+Se puede observar que el p-valor obtenido tras la aplicación del test es inferior al nivel de significación por defecto de $\alpha$ = 0.05. Es por ello que se puede concluir que se rechaza la hipótesis nula H~0~, es decir, sí que existirían diferencias significativas en los precios de los billetes dependiendo del sexo del pasajero.
 
-Podemos calcular rápidamente los precios medios de los billetes dependiendo de si el pasajero era una mujer o un hombre.
+Rápidamente, es posible calcular rápidamente los precios medios de los billetes dependiendo de si el pasajero era una mujer o un hombre.
 
 
 ```{r}
@@ -552,9 +532,9 @@ Efectivamente se puede comprobar como el precio medio del billete en el caso de 
 Por último se construirá un modelo de regresión con la finalidad de poder predecir si un pasajero que cumpla con ciertas características hubiera sobrevivido o no al accidente. 
 Para ello, se construye un modelo de regresión logística, el cual es un tipo de análisis de regresión utilizado para predecir el resultado de una variable categórica (una variable que puede adoptar un número limitado de categorías) en función de las variables independientes o predictoras. Es útil para modelar la probabilidad de un evento ocurriendo como función de otros factores. 
 
-En nuestro caso, trataremos de predecir la variable **Survived** en función de las variables predictoras **Pclass**, **Sex** y **Embarked**. 
+En este caso, se prentende predecir la variable **Survived** en función de las variables predictoras **Pclass**, **Sex** y **Embarked**. 
 
-A continuación, nos interesa estudiar la probabilidad de que un pasajero sobrevisiese, evaluando si alguno de los regresores mencionados tiene una influencia significativa en el resultado.
+A continuación, conviene estudiar la probabilidad de que un pasajero sobrevisiese, evaluando si alguno de los regresores mencionados tiene una influencia significativa en el resultado.
 
 Para ello se crearán las siguientes variables de referencia:
 
@@ -601,7 +581,7 @@ data_AIC <- data.frame("Modelo Regresión Logística" = c("PclassR + SexR","Pcla
 data_AIC %>% kable() %>% kable_styling()
 ```
 
-Así pues, podemos conlcuir que el modelo que mejor estima la probabilidad de que un pasajero sobrevisiese sería el último, en el cual se tienen en cuenta los 3 predictores combinados. Esto es porque presenta la menor medida de AIC de entre todos los modelos.
+Así pues, se puede conlcuir que el modelo que mejor estima la probabilidad de que un pasajero sobrevisiese sería el último, en el cual se tienen en cuenta los 3 predictores combinados. Esto es porque presenta la menor medida de AIC de entre todos los modelos.
 
 ```{r}
 sel <- which(summary(mod.Log4)$coefficients[-1,4] < 0.05)
