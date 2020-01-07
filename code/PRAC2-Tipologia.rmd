@@ -1,0 +1,733 @@
+---
+title: 'Práctica 2: Tipología y ciclo de vida de los datos'
+author: 'Autores: Elisa Fernández Maraver y Francisco Javier Cea Barceló'
+date: '`r format(Sys.Date(),"%e de %B, %Y")`'
+output:
+  html_document:
+    highlight: default
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+    includes:
+      in_header: PRAC-header.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+***
+# Presentación
+***
+
+En esta práctica se elabora un caso práctico orientado a aprender a identificar los datos
+relevantes para un proyecto analítico y usar las herramientas de integración, limpieza, validación y análisis de las mismas.
+
+Se entregará un solo archivo `github`con la solución:
+
++ https://github.com/jceab/titanic
+
+***
+# Competencias
+***
+
+En esta práctica se desarrollan las siguientes competencias del Máster de Data Science:
+
++ Capacidad de analizar un problema en el nivel de abstracción adecuado a cada situación y aplicar las habilidades y conocimientos adquiridos para abordarlo y resolverlo.
+
++ Capacidad para aplicar las técnicas específicas de tratamiento de datos (integración, transformación, limpieza y validación) para su posterior análisis.
+
+***
+# Objetivos
+***
+
+Los objetivos concretos de esta práctica son:
+
++ Aprender a aplicar los conocimientos adquiridos y su capacidad de resolución de problemas en entornos nuevos o poco conocidos dentro de contextos más amplios o multidisciplinares. 
+
++ Saber identificar los datos relevantes y los tratamientos necesarios (integración, limpieza y validación) para llevar a cabo un proyecto analítico. 
+
++ Aprender a analizar los datos adecuadamente para abordar la información contenida en los datos. 
+
++ Identificar la mejor representación de los resultados para aportar conclusiones sobre el problema planteado en el proceso analítico.
+
++ Actuar con los principios éticos y legales relacionados con la manipulación de datos en función del ámbito de aplicación.  
+
++ Desarrollar las habilidades de aprendizaje que les permitan continuar estudiando de un modo que tendrá que ser en gran medida autodirigido o autónomo. 
+
++ Desarrollar la capacidad de búsqueda, gestión y uso de información y recursos en el ámbito de la ciencia de datos. 
+
+***
+# Descripción de la Práctica a realizar
+***
+
+El objetivo de esta actividad será el tratamiento de el dataset **Titanic**, el cual puede ser descargado del siguiente enlace de Kaggle: (https://www.kaggle.com/c/titanic)
+
+Siguiendo las principales etapas de un proyecto analítico, las diferentes tareas a realizar (y **justificar**) son las siguientes:
+
++ 1. Descripción del dataset. ¿Por qué es importante y qué pregunta/problema pretende responder? 
+
++ 2. Integración y selección de los datos de interés a analizar. 
++ 3. Limpieza de los datos.
+
+  * 3.1. ¿Los datos contienen ceros o elementos vacíos? ¿Cómo gestionarías cada uno de estos casos?
+  * 3.2. Identificación y tratamiento de valores extremos.
+
++ 4. Análisis de los datos.
+  
+  * 4.1. Selección de los grupos de datos que se quieren analizar/comparar (planificación de     los análisis a aplicar).
+  * 4.2. Comprobación de la normalidad y homogeneidad de la varianza.
+  * 4.3. Aplicación de pruebas estadísticas para comparar los grupos de datos. En función de     los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis               correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.
+
++ 5. Representación de los resultados a partir de tablas y gráficas.
+
++ 6. Resolución del problema. A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
+
++ 7. Código: Hay que adjuntar el código, preferiblemente en R, con el que se ha realizado la limpieza, análisis y representación de los datos. Si lo preferís, también podéis trabajar en Python.
+
+***
+# Resolución de la práctica
+***
+
+***
+## Descripción del dataset
+***
+
+```{r load_libraries, include=FALSE, warning=FALSE}
+# install.packages(c("corrplot", "dplyr", "ggplot2", "lubridate", "mice", "nortest", "plyr", "VIM"))
+
+# Cargamos las librerías que se utilizarán a lo largo de la actividad:
+library(knitr)
+library(lubridate)
+library(stringr)
+library(plyr)
+library(dplyr)
+library(nortest)
+library(ggplot2)
+library(VIM)
+library(mice)
+library(corrplot)
+library(kableExtra)
+```
+
+Se ha escogido el conjuto _Titanic: Machine Learning from Disaster_, del cual, se va a centrar el análisis en el archivo **train.csv** compuesto por 12 atributos (columnas) y 891 registros (filas). Entre sus atributos se puede identificar:
+
++ **PassengerId**: Identificador del pasajero.
+
++ **Survived**: Variable booleana que indica si el pasajero sobrevivió al hundimiento (1) o no (0).
+
++ **Pclass**: Clase en la que viajaba el pasajero. Puede tomar los valores de: *1 (1st); 2 (2nd); 3(3rd), referidos a la primera, segunda y tercera clase respectivamente.
+
++ **Name**: Nombre del pasajero.
+
++ **Sex**: Género del pasajero.
+
++ **Age**: Edad del pasajero.
+
++ **SibSp**: Número de familiares de segundo grado abordo con los que viajaba. Considera tanto hermanos como hermanastros y cónyuges.
+
++ **Parch**: Número de familiares de primer grado de parentesco abordo con los que viaja dicho pasajero (padres e hijos).
+
++ **Ticket**:Número identificativo del ticket.
+
++ **Fare**: Tarifa del ticket.
+
++ **Cabin**: Número de camarote
+
++ **Embarked**: Puerto en el que embarcó el pasajero. Puede tomar tres valores: *C (Cherbourg); Q (Queenstown); S (Southampton).
+
+Nota: Se debe comprobar como parte inicial del análisis que las columnas descritas presentan los tipos de datos definidos.
+
+***
+## Importancia y objetivos de los análisis
+***
+
+A partir del conjunto de datos se plantea realizar un análisis demográfico para determinar qué características comunes reúnen los pasajeros que sobreviviero en función a los datos recogidos y observar qué atributos de estos pudieron influir más en su posibilidad de supervivencia.
+
+Este análisis se centra un hecho histórico ya ocurrido, por lo que las predicciones desarrolladas por cualquier modelo no van a tener aplicación real. Sin embargo, puede permitir comprender el hecho de por qué unos sobrevivieron y otros no, así como descubrir tendencias de la época. Incluso, si se tiende a pensar que los supervivientes deberían ser mujeres y niños de alta clase, en su mayoría, puede encontrarse un hombre varón de media clase, por ejemplo, que tenga ocultas caracterísitcas comúnes con éstos, permitiendo descubir nuevos hechos y datos. 
+
+Es por ello, que a pesar de que no sean los objetivos de la presente práctica, este dataset da opción al diseño de un modelo de machine learning, pudiendo entrenar un modelo capaz de predecir si un pasajero sobrevive en base a los datos conocidos.
+
+***
+## Integración y selección de los datos de interés a analizar.
+***
+
+El arvhivo descargado está formado por tres documentos .csv:
+
++ train: son los datos de entrenamiento, formados por 12 atributos (columnas) y 891 registros (filas). Su finalidad es la construcción del modelo de aprendizaje automático entorno a la variable *survived.
+
++ test: corresponde a los datos de validación, para comprobar la bondad del modelo. Como son los utilizados para predecir, no incluye la variable objetivo, por consiguiente, está formado por 11 atributos y 418 registros.
+
++ gender_submission: este tercer archivo está compuesto únicamente por dos atributos, **PassengerId** y una predicción donde se asume que solo sobreviven las mujeres referente al dataset de pruebas test.csv. Este fichero va a ser ignorado.
+
+Como el objetivo de esta práctica no es más que el preprocesado y análisis de los datos, no será necesario separarlos en datos de entrenamiento y test. Por ello, se va a trabajar con un único dataset _data_, compuesto por la unión de test y train, que permite un análisis más rico al disponer de más datos.
+
+***
+## Limpieza de los datos
+***
+
+Es esta sección se va a realizar una limpieza de los datos. Lo primero es cargar los ficheros mediante la función `read.csv()` y unirlos en un único dataset.
+
+```{r}
+# Lectura de los datos
+train <- read.csv(file="train.csv", header=TRUE, sep=",", strip.white=TRUE, encoding="UTF-8")
+
+test <- read.csv(file="test.csv", header=TRUE, sep=",", strip.white=TRUE, encoding="UTF-8")
+```
+
+Una vez leídos, se unifican ambos dataset en uno solo, **data**, dimensionándolo con la estructura del dataset **train**.
+
+```{r warning=FALSE}
+data <- bind_rows(train, test)
+rows = dim(data)
+
+# Se puede tener una idea de la distribución del dataset
+head(data)
+```
+
+Para concer la asignación que R ha realizado de cada atributo se hace uso de **str()**.
+
+```{r}
+str(data)
+```
+
++ PassengerId es un entero.
++ Survived es un entero, pero debería ser un factor con dos clases (1 y 2).
++ Pclass es entero también, como sus valores son 1,2 o 3 ha de definirse como factor.
++ Name es un string con el nombre.
++ Sex es un factor con dos niveles (femenino y másculino).
++ Age es una variable de tipo numérica, pero la edad suele darse en años que son de tipo entero. Ya se obserba algún valor nulo (Na), por lo que deberá ser gestionada.
++ SibSp es de tipo entero, correspondiente al número de familiares
++ Parch es también entero.
++ Ticket es un string con el valor del billete.
++ Fare es de tipo numérica indicando el importe del billete que puede ser decimal.
++ Cabin es de tipo string
++ Embarked es de tipo string, como indica el puerto en el que se embarcó y puede tener 3 valores, ha de ser definida como factor.
+
+De esta manera, se han descubierto 3 atributos con la clase errónea que han de ser definidos como factores. También se intuye que habrá que realizar un estudio de valores nulos al menos para la variable **age**.
+
+```{r}
+data$Survived <- as.factor(data$Survived)
+data$Pclass <- as.factor(data$Pclass)
+data$Age <- as.integer(data$Age)
+data$Embarked <- as.factor(data$Embarked)
+
+# Comprobamos que ahora todas los tipos de atributos son correctos
+sapply(data, class)
+```
+
+Visualización descriptiva de los datos.
+
+```{r}
+summary(data)
+```
+
+A priori se observa que hay más personas que no han sobrevivido a aquellas que sí; y, como era de esperar, 418 registros con valores nulos para los supervivientes, correspondientes a los datos de tipo test. La mayoría de los pasajeros eran de tercera clase, y hombres; que no viajaban con familiares ni de primero ni de segundo grado; y embarcaron en el puerto de Southampton.
+
+***
+### Selección datos de interés
+***
+
+Por otro lado, en base al planteamiento que se quiere llevar a cabo, hay ciertos atributos que no serán de interés para el análisis, pues no aportan datos significativos. Estos son **Name**, **Ticket** y **Cabin**, por lo que son eliminados.
+
+```{r}
+data_filt <- data[, -(4)] #Name
+data_filt <- data_filt[, -(8)] #Ticket
+data_filt <- data_filt[, -(9)] #Cabin
+
+# Se puede observar como se queda el nuevo dataset
+head(data_filt)
+```
+
+***
+### Ceros y elementos vacíos
+***
+
+Es muy importante conocer si existen valores nulos (campos vacíos) y la distribución de los valores que poseen las variables, para que de esta forma, se pueda realizar una correcta intepretación de los mismos.
+
+```{r message=FALSE, warning=FALSE}
+#Búsqueda de valores vacíos en atributos declarados como nulos (NA), o como cadena de #caracteres, ("", " ").
+colSums(is.na(data_filt))
+```
+
+Como era de esperar, se observan los 418 registros procedentes del archivo **test.csv** que no tienen valores para el atributo **Survived**. Por lo tanto, se procede a su eliminación, puesto que **Survived** es un atributo esencial en el que se centra el estudio de los datos, y haciéndolo, aún habría datos suficientes para obtener conclusiones sin sesgar los resultados. 
+
+Por otro lado, hay un total de 263 pasajeros para los cuales se desconoce su edad y el precio que pagaron por su billete billete.
+
+```{r}
+colSums(data_filt == "")
+```
+
+Por otro lado, **Embarked** presenta 2 valores nulos.
+
+```{r}
+colSums(data_filt == " ")
+```
+
+En definitiva, hay 3 tipos de valores vacíos que tratar:
+
+1. **Survived**: van a ser eliminadas directamente las filas correspondientes a ella puesto que al tratarse de la variable de interés, no puede estar sesgada.
+
+2. **Age**: hay que estudiar si corresponde por ejemplo a bebés menores de un año, por lo que su valor sería 0, o bien han de ser estimados. Como se trata de un número alto de valores nulos hay que tratarlos con precuaución.
+
+3. **Fare** y **Embarked**: el número de valores nulos es muy bajo, por lo que se va a optar por sustituir dicho valor por la media y moda, respectivamente de los atributos.
+
+```{r}
+# Se eliminan los datos de test
+data_filt <- data_filt[which(data_filt$Survived != "NA"),]
+
+# Nueva búsqueda
+colSums(is.na(data_filt))
+
+colSums(data_filt=="")
+```
+
+```{r}
+aggr(data_filt, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(data_filt), cex.axis=.7, gap=3, ylab=c("Proportion of missingness","Missingness Pattern"));
+```
+
+El valor vacío encontrado en el atributo **Fare** no se considera ya que corresponde a un registro procedente del archivo **test.csv**, de manera que se ha eliminado con el borrado de estos. Sin embargo, en el atributo **Embarked** hay dos registros vacíos para los que se les asigna el valor de la moda del atributo, C (Cherbourg).
+
+```{r}
+get_mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+```
+
+```{r}
+data_filt$Embarked[data_filt$Embarked == ""] = get_mode(data_filt$Embarked)
+```
+
+Para los valores vacíos del atributo **Age**, se decide completar utilizando un algoritm de regresión en función de los otros valores. Así, mediante un modelo muy simple de **MICE** se estima la edad para cada registro.
+
+MICE (Multivariate Imputation via Chained Equations) permite imputar los valores perdidos, asumiendo que la probabilidad de que un valor se pierda depende solo de valores observados, por lo que puede ser predecida.
+
+```{r}
+temp_data <- mice(data = data_filt, m = 5, method = "pmm", maxit = 50, seed = 500)
+# Se completa el dataset, ya no hay más valores nulos.
+data_filt <- complete(temp_data,1)
+```
+
+Una vez gestionados los datos vacíos o nulos, el dataset tiene las siguientes características:
+
+```{r}
+dim(data_filt)
+summary(data_filt)
+```
+
+*master**_clean_** contiene `r nrow(data_filt)` registros y `r ncol(data_filt)` atributos, siendo estos: `r toString(names(data_filt))`.
+
+***
+### Valores extremos
+***
+
+A continuación, se comprueba si existe la presencia de valores extremos o atípicos (outliers), de manera que se identifiquen aquellos posibles valores que parecen inconsistentes e incongruentes con el resto de registros.
+
+Es esencial detectar estos valores puesto que su uso en cálculos probabilísticos puede dar lugar a errores o desviaciones en las estimaciones, por ejemplo en la media.
+
+Uno de los métodos más visuales para poder identificar estos valores es mediante la representación gráfica de diagramas de cajas o boxplot, ya que permite observar todos estos valores (mínimos y máximos) y la distribución que toma el resto del conjunto.
+
+Se debe tener en cuenta que buscar este tipo de valores solo es posible a priori en variables numéricas (**Age**, **SibSp**, **Parch** y **Fare**). 
+
+Se comienza con el atributo **Age**.
+
+```{r}
+boxplot(data_filt$Age, main = "Distribución de la edad", col = "blue", border = "black", horizontal = TRUE, notch = TRUE)
+```
+
+Se observa que existen outliers máximos (cercanos a 80) y mínimos (cercanos a 0) pero que están dentro del rango válido para el atributo que representan, ya que corresponderían a bebés y a pasajeros de edad avanzada. Por ello se mantienen en la muestra.
+
+Extendiendo la misma representación para las variables de **SibSp**, **Parch** y **Fare**:
+
+```{r}
+boxplot(data_filt[,c("SibSp", "Parch")], main = "Distribución de familiares", col = "blue", border = "black", horizontal = TRUE, notch = FALSE)
+```
+
+A pesar de que en estos casos también se observan outliers, las variables toman valores dentro de los márgenes reales del atributo que definen. Los pasajeros viajan en su mayoría no acompañados de familiares de segundo grado de parentesco (hermanos y hermanastros) o cónyuges, definido por la variable SibSp, ni por familiares de primer grado de parentesco, definido por la variable Parch. Hay otros casos aislados donde viaja una familia entera, con hasta 8 familiares de segundo grado.
+
+```{r}
+boxplot(data_filt$Fare, main = "Distribución de la tarifa del ticket", col = "blue", border = "black", horizontal = TRUE, notch = TRUE)
+```
+
+Se puede observar que el outlier más alejado de la media, que corresponde a un valor de billete de £512,13 (presumublemente en libras esterlinas), mientras que hay otros outliers entre 70 y 300 libras que parecen precios más lógicos. Se ha investigado si este número se trata de un error o valor real y se ha concluido que se aproxima mucho a la información encontrada en diferentes portales web que cinta como fuente los archivos de las Cortes de Distrito de los Estados Unidos y lo asocia a las personas relacionadas en el dataset con ese billete. Aún así, la información puede variar muy ligeramente de un portal web a otro por lo que se comenta solo como una curiosidad sin nombrar a las fuentes, pero que para el análisis da cierta credibilidad en ese outlier, y de ahí la decisión de mantenerlo. Tendría sentido que se tratase de un billete de reventa que una persona esté dispuesta a pagar lo que fuese para poder tener un pasaje.
+
+Una vez inalizados los procesos de integración, validación y limpieza del conjunto de datos inicial, se genera un nuevo fichero de salida denominado **data_clean.csv**. Cabe destacar que en caso de realizar un modelo predictivo, los datos de test deberán ser modificados con las mismas transformaciones realizadas.
+
+```{r}
+new.data_filt <- "data_clean.csv"
+write.csv(data_filt, file = new.data_filt, row.names = FALSE)
+```
+
+***
+## 6.5. Análisis de los datos
+***
+
+En esta sección se pretende explicar las principales características de los datos con el fin de responder a las preguntas planteadas en el marco del proyecto de datos.
+
+***
+### Selección de los grupos de datos a analizar
+***
+
+En primer luhar, se generan los grupos de datos que pueden resultar interesantes para el análisis.
+
+```{r}
+# Asociación en base a supervivencia
+pSurvived <- data_filt[data_filt$Survived == "1",]
+pNonSurvived <- data_filt[data_filt$Survived == "0",]
+
+# Asociación en base al género
+pMen <- data_filt[data_filt$Sex == "male",]
+pWomen <- data_filt[data_filt$Sex == "female",]
+
+# Asociación en base a la clase de billete
+pFirst <- data_filt[data_filt$Pclass == "1",]
+pSecond <- data_filt[data_filt$Pclass == "2",]
+pThird <- data_filt[data_filt$Pclass == "3",]
+
+# Asociación en base al acompañamientos de familiares.
+pFam2.1 <- data_filt[data_filt$SibSp > "0",]
+pFam2.0 <- data_filt[data_filt$SibSp == "0",]
+pFam1.1 <- data_filt[data_filt$Parch > "0",]
+pFam2.0 <- data_filt[data_filt$Parch == "0",]
+```
+
+***
+### Comprobación de la normalidad y homogeneidad de la varianza.
+***
+
+Para comprobar si los atributos cuantitativos de los registros siguen una distribución normal, se realizará una visualización gráfica con las curvas Q-Q y se aplicará el test de Shapiro-Wilk. En este test se plantea como hipótesis nula que una muestra proviene de una población normalmente distribuida.
+
+```{r}
+# Utilizamos el nivel de significación por defecto
+alpha = 0.05
+
+att_name = names(data_filt)
+
+for (i in 1:ncol(data_filt)) {
+  
+  # Calculamos el p-valor obtenido a través del test de Shapiro-Wilk para las variables cuantitativas del dataset
+  if (is.integer(data_filt[,i]) | is.numeric(data_filt[,i])) {
+    p_value = shapiro.test(data_filt[,i])$p.value
+    
+    # Si el p-valor es inferior al nivel de significación, se rechazará la hipótesis nula de asunción de normalidad
+    if (p_value < alpha) {
+      cat(att_name[i])
+      if (i < ncol(data_filt) - 1) {
+        cat(", ")
+      }
+    }
+  }
+}
+```
+
+Tras aplicar el test de Shapiro-Wilk a los atributos cuantitativos, obtenemos que para las variables **Age**, **SibSp**, **Parch** y **Fare**, se obtiene un p-valor inferior al nivel de significación de 0.05. Esto nos indica que con un valor de confianza del 95%, podemos rechazar la hipótesis nula de normalidad.
+
+Nota: Obviamos el resultado obtenido para la variable **PassengerID**, ya que esta variable es meramente un indentificador del pasajero y no contiene información útil para el análisis estadístico.
+
+A continuación se utilizará una representación gráfica a través de los gráficos Q-Q para verificar los resultados obtenidos con el test de Shapiro-Wilk para las variables que no siguen una distribución normal:
+
+```{r}
+qqnorm(data_filt$Age, main="Age")
+qqline(data_filt$Age, col = 'red')
+```
+
+```{r}
+qqnorm(data_filt$SibSp, main="SibSp")
+qqline(data_filt$SibSp, col = 'red')
+```
+
+
+```{r}
+qqnorm(data_filt$Parch, main="Parch")
+qqline(data_filt$Parch, col = 'red')
+```
+
+
+```{r}
+qqnorm(data_filt$Fare, main="Fare")
+qqline(data_filt$Fare, col = 'red')
+```
+
+Tal y como habíamos obtenido en el test de normalidad de Shapiro-Wilk, los gráficos Q-Q muestran unas desviaciones respecto de la normal bastante pronunciadas, especialmente notable en los valores extremos (valores inferiores y superiores)
+
+Para la comprobación de la homogeneidad de la varianza, y dado que nos encontramos ante la necesidad de aplicar un test no paramétrico debido a que las variables anteriormente no cumplen la condición de normalidad, se utilizará el test de **Fligner-Killeen**. En este test, la hipótesis nula asume la igualdad de varianzas entre las distintas muestras de datos.
+
+Se pasa a comprobar la homogeneidad de varianzas entre las muestras de pasajeros que viajan solos y las de pasajeros que viajan acompañados.
+
+```{r}
+# Creamos una nueva variable "SurvivedR" para convertir su tipo y así poder utilizarla en el test de homogeneidad de varianzas
+
+data_filt$SurvivedR <- data_filt$Survived
+data_filt$SurvivedR <- as.integer(data_filt$SurvivedR)
+
+fligner.test(SurvivedR ~ SibSp, data = data_filt)
+fligner.test(SurvivedR ~ Parch, data = data_filt)
+```
+
+El resultado arrojado por el test Fligner-Killeen nos indica que en ambos casos se puede rechazar la hipótesis nula de homogeneidad de varianzas, ya que el p-valor es siempre inferior al nivel de significación $\alpha$ = 0.05. Por tanto podemos concluir que el atributo **Survived** presenta varianzas distintas para los grupos de **SibSp** y **Parch**.
+
+***
+## Aplicación de pruebas estadísticas
+***
+
+En este apartado se aplicarán, en función de los datos y el objetivo del estudio, pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Concretamente, se aplicarán tres métodos de análisis diferentes.
+
+En este caso se cuenta con una muestra de la población total de pasajeros que viajaban a bordo del Titanic. Se pretende por tanto inferir sobre esta población a través de las siguientes pruebas estadísticas.
+
+***
+### Estudio de correlaciones
+***
+
+El análisis de correlación consiste en un procedimiento estadístico para determinar si dos variables están relacionadas o no. El resultado del análisis es un coeficiente de correlación  que tomará valores entre -1 y +1.  El signo indica el  tipo de correlación entre las dos variables . Un signo positivo indica que existe una relación positiva entre las dos variables, mientras que un signo negativo indica justamente lo contrario. En el caso de que dos variables sean independientes entre sí, su coeficiente de correlación tomará el valor de cero . 
+
+Aplicamos este análisis de correlación entre las variables cuantitativas de nuestro dataset: **Age**, **SibSp**, **Parch** y **Fare**. 
+
+Debido a que estos atributos no cumplen la condición de normalidad tal y como calculamos en apartados anteriores, se deberá aplicar el test no paramétrico del **rango de correlación de Spearman**.
+
+
+```{r warning=FALSE}
+# Calculamos la matriz de correlaciones
+data.cor = cor(data_filt[sapply(data_filt, is.numeric)], method = c("spearman"))
+data.cor
+
+# Visualizamos la matriz de correlaciones
+corrplot(data.cor)
+```
+
+A través del anterior gráfico de la matriz de correlaciones, podemos conlcuir que las correlaciones entre las variables **SurvivedR** y el resto de variables cuantitativas es muy débil. Encontramos el mayor grado de correlación entre las variables **SibSp** y **Parch**, con un valor de 0.45.
+Tampoco se observa por ejemplo que exista una correlación significativa entre las variables **Age** y **Fare**.
+
+***
+### Contraste de hipótesis
+***
+
+Continuamos el análisis estadístico realizando un contraste de hipótesis. Queremos saber si existen diferencias en los precios de los billetedes dependiendo del sexo del pasajero. 
+
+```{r}
+# Separamos nuestro juego de datos en dos grupos, dependiendo del sexo del pasajero
+price_male <- data_filt[data_filt$Sex == "male",]$Fare
+price_female <- data_filt[data_filt$Sex == "female",]$Fare
+```
+
+Nuevamente, tenemos que hacer referencia a la necesidad de aplicar un test no paramétrico debido a la asuencia de normalidad calculada en apartados anteriores. Por ello, se decide utilizar el **test U de Mann-Whitney** para dos muestras independientes.
+
+Como se parte del supuesto establecido en el que los datos no presentan una distribución normal, las hipótesis planteadas se hacen en base a las medianas $Me$.
+
+
+*Hipótesis nula y alternativa
+
+H~0~ : $Me$~F~ = $Me$~M~ <br/>
+H~1~ : $Me$~F~ $\neq$ $Me$~M~ <br/>
+
+En este caso nos encontramos ante un un contraste bilateral para la hipótesis alternativa planteada.
+
+
+```{r, eval=TRUE, echo=TRUE}
+testU <- wilcox.test(price_male, price_female, alternative = "two.sided", paired = FALSE, exact = FALSE, conf.level = 0.95)
+testU
+```
+
+Observamos que el p-valor obtenido tras la aplicación del test es inferior al nivel de significación por defecto de $\alpha$ = 0.05. Es por ello que podemos concluir que se rechaza la hipótesis nula H~0~, es decir, sí que existirían diferencias significativas en los precios de los billetes dependiendo del sexo del pasajero.
+
+Podemos calcular rápidamente los precios medios de los billetes dependiendo de si el pasajero era una mujer o un hombre.
+
+
+```{r}
+mean_price_male <- mean(price_male)
+mean_price_female <- mean(price_female)
+
+data_price <- data.frame("Sexo" = c("Hombre","Mujer"),"Precio medio del billete" = c(mean_price_male,mean_price_female), check.names=FALSE)
+
+data_price %>% kable() %>% kable_styling()
+```
+
+Efectivamente se puede comprobar como el precio medio del billete en el caso de que fuese adquirido por una mujer es aproximadamente un 74% más caro que en el caso de que fuese adquirido por un hombre.
+
+***
+### Modelo de regresión logística
+***
+
+Por último se construirá un modelo de regresión con la finalidad de poder predecir si un pasajero que cumpla con ciertas características hubiera sobrevivido o no al accidente. 
+Para ello, se construye un modelo de regresión logística, el cual es un tipo de análisis de regresión utilizado para predecir el resultado de una variable categórica (una variable que puede adoptar un número limitado de categorías) en función de las variables independientes o predictoras. Es útil para modelar la probabilidad de un evento ocurriendo como función de otros factores. 
+
+En nuestro caso, trataremos de predecir la variable **Survived** en función de las variables predictoras **Pclass**, **Sex** y **Embarked**. 
+
+A continuación, nos interesa estudiar la probabilidad de que un pasajero sobrevisiese, evaluando si alguno de los regresores mencionados tiene una influencia significativa en el resultado.
+
+Para ello se crearán las siguientes variables de referencia:
+
++**Pclass** = _3_
++**Sex** = _male_
++**Embarked** = _S_ 
+
+```{r}
+data_filt$Survived = data_filt$Survived == 1
+
+data_filt$PclassR = relevel(data_filt$Pclass, ref = '3')
+data_filt$SexR = relevel(data_filt$Sex, ref = 'male')
+data_filt$EmbarkedR = relevel(data_filt$Embarked, ref = 'S')
+```
+
+Una vez creados los atributos de referencia, se procede a generar los distintos modelos de regresión, en los que se jugará con las distintas combinaciones de predictores. La medida **AIC** obtenida en cada uno de los modelos indicará cuál de ellos es el mejor a la hora de tener que realizar una predicción (cuanto menor sea la medida AIC, mejor será el modelo generado).
+
+```{r}
+mod.Log1 = glm(Survived ~ PclassR + SexR, family=binomial, data = data_filt)
+
+mod.Log2 = glm(Survived ~ PclassR + EmbarkedR, family=binomial, data = data_filt)
+
+mod.Log3 = glm(Survived ~ SexR + EmbarkedR, family=binomial, data = data_filt)
+
+mod.Log4 = glm(Survived ~ PclassR + SexR + EmbarkedR, family=binomial, data = data_filt)
+
+summary(mod.Log1)
+summary(mod.Log2)
+summary(mod.Log3)
+summary(mod.Log4)
+```
+
+Por último se muestran los resultados obtenidos en los modelos generados en una tabla resumen:
+
+```{r}
+# Mostramos los resultados obtenidos en una tabla resumen
+aic1 <- mod.Log1$aic
+aic2 <- mod.Log2$aic
+aic3 <- mod.Log3$aic
+aic4 <- mod.Log4$aic
+
+data_AIC <- data.frame("Modelo Regresión Logística" = c("PclassR + SexR","PclassR + EmbarkedR", "SexR + EmbarkedR", "PclassR + SexR + EmbarkedR"), "Valor AIC" = c(aic1,aic2,aic3,aic4), check.names=FALSE)
+
+data_AIC %>% kable() %>% kable_styling()
+```
+
+Así pues, podemos conlcuir que el modelo que mejor estima la probabilidad de que un pasajero sobrevisiese sería el último, en el cual se tienen en cuenta los 3 predictores combinados. Esto es porque presenta la menor medida de AIC de entre todos los modelos.
+
+```{r}
+sel <- which(summary(mod.Log4)$coefficients[-1,4] < 0.05)
+sel <- sel + 1
+sel
+```
+
+Ha sido signiﬁcativo el test parcial sobre los coeﬁcientes de **PclassR1**, **PclassR2**, **SexRfemale** y **EmbarkedRC**,siendo las estimaciones de sus coeﬁciente 1.8472, 1.1698, 2.6142 y 0.5914 respectivamente.
+
+Estos resultados indican que la probabilidad de un pasajero que fuese mujer y viajara en primera o segunda clase es significativamente elevada.
+
+Para concluir, se estudiará la calidad del ajuste, calculando la de confusión del mejor modelo (en este caso el número 4) y suponiendo un umbral de discriminación del 80%.
+
+```{r}
+data_filt$SurvivedP= predict(mod.Log4, data_filt, type="response")
+
+data_filt$SurvivedP <- ifelse(data_filt$SurvivedP > 0.7,1,0)
+table(data_filt$SurvivedP, data_filt$SurvivedP)
+```
+
+Se observa que no se obtiene ningún falso positivo ni tampoco ningún falso negativo.
+
+**Nota**: Un falso negativo en este caso correspondería a un pasajero que sobrevivió pero que el modelo ha predicho que su probabilidad de haber sobrevivido es inferior al 70%. Por otro lado, un falso positivo correspondería a un pasajero que no sobrevivió pero que el lmodelo ha predicho que su probabilidad de haber sobrevivido es superior al 70%.
+
+***
+## Representación de los resultados a partir de tablas y gráficas
+***
+
+A continuación se realizará un análisis visual a partir de tablas y gráficos de las relaciones más significativas que se dan entre algunos de los atributos del dataset.
+
+```{r warning=FALSE}
+nrows = dim(data_filt)
+ggplot(data = data_filt[1:nrows,], aes(x = Sex, fill = Survived)) + geom_bar() + scale_fill_brewer(palette="Set1") + ylab("Survival count") + theme_minimal()
+
+
+ggplot(data = data_filt[1:nrows,], aes(x = Sex, fill = Survived)) + geom_bar(position = "fill") + scale_fill_brewer(palette="Set1") + ylab("Survival rate") + theme_minimal()
+```
+
+La anterior gráfica refleja el hecho de que el porcentaje de pasajeros hombres que no lograron sobrevivir al accidente es claramente superior al porcentaje de mujeres que no sobrevivieron. 
+
+Concretamente, se observa que el porcentaje de hombres que sobrevivieron ronda el 20%, mientras que el % para las mujeres es de aproximadamente el 75%.
+
+En las siguientes gráficas se muestra la relación entre las variables **Survived**, **Pclass** y **Emabrked**.
+
+```{r warning=FALSE}
+ggplot(data = data_filt[1:nrows,], aes(x = Pclass, fill = Survived)) + geom_bar(position = "fill") + ylab("Survival rate") + scale_fill_brewer(palette="Set1") + theme_minimal()
+
+ggplot(data = data_filt[1:nrows,], aes(x = Embarked, fill = Survived)) + geom_bar(position = "fill") + ylab("Survival rate") + facet_wrap(~Pclass, strip.position = "bottom") + scale_fill_brewer(palette="Set1") + theme_minimal()
+```
+
+En el primer gráfico, se observa como el porcentaje de pasajeros que sobrevivieron dependiendo de la clase en la que viajaban. Así pues, los pasajeros que viajaban en primera clase presentan un mayor porcentaje de supervivencia frente aquellos que lo hacían en tercera clase. 
+
+El segundo gráfico desglosa el mismo análisis presentado en el primero, incluyendo las 3 ciudades en las cuales los pasajeros embarcaron antes de poner rumbo al destino planeado. 
+
+```{r warning=FALSE}
+table1 <- table(data_filt[1:nrows,]$Embarked, data_filt[1:nrows,]$Survived)
+for (i in 1:dim(table1)){
+    table1[i,] <- table1[i,] / sum(table1[i,])*100
+}
+table1
+```
+
+La anterior tabla complementa al último gráfico. En la misma se desliza el hecho de que los pasajeros que embarcaron en la ciudad de Cherbourg presentan un mayor porcentaje de supervivencia que aquellos que lo hicieron en las otras dos ciudades de Queenstown y Southampton.
+
+A continuación se analiza el porcentaje pasajeros que sobrevivieron al accidente en función del tamaño de la familia con la que viajaban.
+
+```{r warning=FALSE}
+# Se crea una nueva variable que refleje el tamaño de la familia
+data_filt$FamilySize <- data_filt$SibSp + data_filt$Parch + 1
+
+ggplot(data = data_filt[!is.na(data_filt[1:nrows,]$FamilySize),], aes(x = FamilySize, fill = Survived)) + geom_histogram(binwidth=2, position = "fill") + ylab("Survival rate") + scale_fill_brewer(palette="Set1") + theme_minimal()
+```
+
+Se puede observar como los pasajeros que viajaban con familias de tamaño medio (entre 3 y 5 miembros) presentan los porcentajes más elevados de supervivencia. Los pasajeros que viajaban en familias numerosas presentan sin embarho un índice de mortalidad del 100%.
+
+Por último se mostrará un último gráfico que refleje los porcentajes de supervivencia en función del rango de edad de los pasajeros. Para ello se ha de crear primero una nueva variable **AgeRange** agrupando las edades en los siguientes grupos: Niños (<16), Jóvenes (16-30), Adultos (31-65) y Ancianos (>65): 
+
+```{r}
+data_filt$AgeRange <- data_filt$Age
+for (i in 1:length(data_filt$AgeRange))
+{
+  if (data_filt[i,]$AgeRange < 16)
+  {
+    data_filt[i,]$AgeRange <- "<16"
+  }
+  else
+  {
+    if (data_filt[i,]$AgeRange >= 16 && data_filt[i,]$AgeRange <= 30)
+    {
+      data_filt[i,]$AgeRange <- "16-30"
+    }
+    else
+    {
+      if (data_filt[i,]$AgeRange > 30 && data_filt[i,]$AgeRange <= 65)
+      {
+        data_filt[i,]$AgeRange <- "31-65"
+      }
+      else
+      {
+        if (data_filt[i,]$AgeRange > 65)
+            {
+              data_filt[i,]$AgeRange <- "+65"
+            }
+      }
+    }
+  }
+}
+```
+
+Visualizando este nuevo atributo de rango de edades, **AgeRange**, en función de la supervivencia.
+
+```{r warning=FALSE}
+ggplot(data = data_filt[1:nrows,], aes(x = AgeRange, fill = Survived)) + geom_bar(position = "fill") + ylab("Survival rate") + scale_fill_brewer(palette="Set1") + theme_minimal()
+```
+
+En esta última representación gráfica se observa que los pasajeros menores de 16 años presentan el mayour índice de supervivencia, situándose alrededor del 60%. En contraposición, los jóvenes de entre 16 y 30 años junto con las personas mayores de 65 años son los grupos de pasajeros que presentan el índice más bajo de supervivencia con un 35% aproximadamente.
+
+***
+## Conclusiones
+***
+
+
+
+***
+# Contribuciones al trabajo
+***
+
+![Tabla de contribuciones](Contribuciones.JPG)
+
