@@ -298,7 +298,7 @@ dim(data_filt)
 summary(data_filt)
 ```
 
-*master**_clean_** contiene `r nrow(data_filt)` registros y `r ncol(data_filt)` atributos, siendo estos: `r toString(names(data_filt))`.
+*data**_clean_** contiene `r nrow(data_filt)` registros y `r ncol(data_filt)` atributos, siendo estos: `r toString(names(data_filt))`.
 
 ***
 ### Valores extremos
