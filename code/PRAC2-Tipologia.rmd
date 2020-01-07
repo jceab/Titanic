@@ -703,7 +703,31 @@ En esta última representación gráfica se observa que los pasajeros menores de
 ## Conclusiones
 ***
 
+Con la elección de este dataset se partía del objetivo de realizar un análisis del mismo para obtener información demográfica útil que permitiese comprender las características que ayuden a aclarar los factores comunes que contribuyeron a la supervivencia de algunos pasarjeros en el fatal accidente.
 
+Previo al al análisis estadístico de los datos, se ha procedido a realizar tareas de limpieza de datos (detección de outliers, detección de valores perdidos). Con ello se ha obtenido un nuevo juego de datos compuesto por 891 registros y los siguientes 9 atributos: **PassengerId**, **Survived**, **Pclass**, **Sex**, **Age**, **SibSp**, **Parch**, **Fare**, y **Embarked**.
+
+A continuación se ha procedido a la realización de un análisis estadístico sobre este nuevo juego de datos en el que se ha estudiado la normalidad y homocedasticidad, así como la aplicación de técnicas de correlación, contraste de hipótesis y modelos de regresión logística.
+
+Los resultados arrojados por el análisis estadístico han determinado que ninguno de los atributos estudiados **Age**, **SibSp**, **Parch** y **Fare** obedece a una distribución normal, por lo que todos los test aplicados han sido no paramétricos.  
+
+Por otro lado, el estudio de correlación realizado ha permitido conocer la influencia de dichos atributos sobre el parámetro de supervivencia. En el mismo, se ha podido concluir que los atributos que se deseaban estudiar no presentan una correlación significativa con la variable de interés **Survived**.
+
+En el contraste de hipótesis se ha querido dar respuesta a la pregunta sobre si existe una diferencia significativa en el precio pagado por un billete dependiendo de si se trata de una mujer o un hombre. Se ha obtenido como resultado que el precio medio pagado por las mujeres era bastante superior al pagado por los hombres. Esto no quiere decir que el precio de los billetes fuera más caro para las mujeres, sino que indica que hubo más mujeres que viajasen en clases superiores respecto a los hombres.
+
+Para concluir el apartado de análisis estadístico, se han realizado diversos modelos de regresión logística, dado el alto número de variables categóricas que contiene el dataset, los cuales han servido para poder realizar predicciones sobre si un pasajero con unas características determinadas hubiera sobrevivido o no al accidente. El modelo que mejor rendimiento ha dado ha sido en el que se han utilizado los atributos Pclass, Sex y Embarked como predictores de forma combinada.
+
+Finalmente, se ha procedido a realizar una serie de visualizaciones gráficas sobre distintos atributos de interés que han contribuido a la comprensión del juego datos. Así podemos resaltar los siguientes puntos:
+
+* Los pasajeros más jovenes, con un rango de edad de 0 a 16 años, son los que presentan un mayor índice de supervivencia.
+
+* Las mujeres presentan claramente un índice de supervivencia mucho más elevado que el de los hombres, el cual no llega siquiera al 25%.
+
+* Los pasajeros con mayor probabilidad de supervivencia son aquellos que embarcaron en el puerto de Cherbourg (55.36%). Mientras que aquellos que embarcaron en Queenstown y Southampton presentan índices de 38.96% y 33.9% respectivamente. Nótese que la mayoría de pasajeros iniciaron su viaje en la ciudad de Southampton, lo cual puede explicar su menor índice de supervivencia.
+
+* En cuanto a la clase, únicamente el 25% de pasajeros de tercera clase consiguió sobrevivir, siendo el porcentaje para aquellos que viajaban en primera clase de casi el 70%. Esto es un claro reflejo de la sociedad de aquella época, en la cual las altas clases disfrutaban de importantes prioridades y privilegios frente a las clases más humildes.
+
+* En caso de que los pasajeros viajaran junto con otros familiares de primer o segundo grado, éstos presentan mayores probabilidades de supervivencia frente a pasajeros que viajaban solos o familias muy numerosas. Este hecho tiene sentido ya que los niños viajaban acompañados al menos por un adulto.
 
 ***
 # Contribuciones al trabajo
