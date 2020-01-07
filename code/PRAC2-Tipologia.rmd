@@ -96,7 +96,6 @@ Siguiendo las principales etapas de un proyecto analítico, las diferentes tarea
 
 ```{r load_libraries, include=FALSE, warning=FALSE}
 # install.packages(c("corrplot", "dplyr", "ggplot2", "lubridate", "mice", "nortest", "plyr", "VIM"))
-
 # Cargamos las librerías que se utilizarán a lo largo de la actividad:
 library(knitr)
 library(lubridate)
@@ -118,7 +117,6 @@ Se ha escogido el conjuto _Titanic: Machine Learning from Disaster_, del cual, s
 + **Survived**: Variable booleana que indica si el pasajero sobrevivió al hundimiento (1) o no (0).
 
 + **Pclass**: Clase en la que viajaba el pasajero. Puede tomar los valores de: *1 (1st); 2 (2nd); 3(3rd), referidos a la primera, segunda y tercera clase respectivamente.
-
 + **Name**: Nombre del pasajero.
 
 + **Sex**: Género del pasajero.
@@ -136,7 +134,6 @@ Se ha escogido el conjuto _Titanic: Machine Learning from Disaster_, del cual, s
 + **Cabin**: Número de camarote
 
 + **Embarked**: Puerto en el que embarcó el pasajero. Puede tomar tres valores: *C (Cherbourg); Q (Queenstown); S (Southampton).
-
 Nota: Se debe comprobar como parte inicial del análisis que las columnas descritas presentan los tipos de datos definidos.
 
 ***
@@ -172,12 +169,10 @@ Es esta sección se va a realizar una limpieza de los datos. Lo primero es carga
 ```{r}
 # Lectura de los datos
 data <- read.csv(file="train.csv", header=TRUE, sep=",", strip.white=TRUE, encoding="UTF-8")
-
 ```
 
 ```{r warning=FALSE}
 rows = dim(data)
-
 # Se puede tener una idea de la distribución del dataset
 head(data)
 ```
@@ -208,7 +203,6 @@ data$Survived <- as.factor(data$Survived)
 data$Pclass <- as.factor(data$Pclass)
 data$Age <- as.integer(data$Age)
 data$Embarked <- as.factor(data$Embarked)
-
 # Comprobamos que ahora todas los tipos de atributos son correctos
 sapply(data, class)
 ```
@@ -231,7 +225,6 @@ Por otro lado, en base al planteamiento que se quiere llevar a cabo, hay ciertos
 data_filt <- data[, -(4)] #Name
 data_filt <- data_filt[, -(8)] #Ticket
 data_filt <- data_filt[, -(9)] #Cabin
-
 # Se puede observar como se queda el nuevo dataset
 head(data_filt)
 ```
@@ -286,7 +279,7 @@ Para los valores vacíos del atributo **Age**, se decide completar utilizando un
 
 MICE (Multivariate Imputation via Chained Equations) permite imputar los valores perdidos, asumiendo que la probabilidad de que un valor se pierda depende solo de valores observados, por lo que puede ser predecida.
 
-```{r}
+```{r, results="hide"}
 temp_data <- mice(data = data_filt, m = 5, method = "pmm", maxit = 50, seed = 500)
 # Se completa el dataset, ya no hay más valores nulos.
 data_filt <- complete(temp_data,1)
@@ -298,7 +291,7 @@ dim(data_filt)
 summary(data_filt)
 ```
 
-*data**_clean_** contiene `r nrow(data_filt)` registros y `r ncol(data_filt)` atributos, siendo estos: `r toString(names(data_filt))`.
+**data_clean** contiene `r nrow(data_filt)` registros y `r ncol(data_filt)` atributos, siendo estos: `r toString(names(data_filt))`.
 
 ***
 ### Valores extremos
@@ -357,16 +350,13 @@ En primer luhar, se generan los grupos de datos que pueden resultar interesantes
 # Asociación en base a supervivencia
 pSurvived <- data_filt[data_filt$Survived == "1",]
 pNonSurvived <- data_filt[data_filt$Survived == "0",]
-
 # Asociación en base al género
 pMen <- data_filt[data_filt$Sex == "male",]
 pWomen <- data_filt[data_filt$Sex == "female",]
-
 # Asociación en base a la clase de billete
 pFirst <- data_filt[data_filt$Pclass == "1",]
 pSecond <- data_filt[data_filt$Pclass == "2",]
 pThird <- data_filt[data_filt$Pclass == "3",]
-
 # Asociación en base al acompañamientos de familiares.
 pFam2.1 <- data_filt[data_filt$SibSp > "0",]
 pFam2.0 <- data_filt[data_filt$SibSp == "0",]
@@ -383,9 +373,7 @@ Para comprobar si los atributos cuantitativos de los registros siguen una distri
 ```{r}
 # Utilizamos el nivel de significación por defecto
 alpha = 0.05
-
 att_name = names(data_filt)
-
 for (i in 1:ncol(data_filt)) {
   
   # Calculamos el p-valor obtenido a través del test de Shapiro-Wilk para las variables cuantitativas del dataset
@@ -439,10 +427,8 @@ Se pasa a comprobar la homogeneidad de varianzas entre las muestras de pasajeros
 
 ```{r}
 # Creamos una nueva variable "SurvivedR" para convertir su tipo y así poder utilizarla en el test de homogeneidad de varianzas
-
 data_filt$SurvivedR <- data_filt$Survived
 data_filt$SurvivedR <- as.integer(data_filt$SurvivedR)
-
 fligner.test(SurvivedR ~ SibSp, data = data_filt)
 fligner.test(SurvivedR ~ Parch, data = data_filt)
 ```
@@ -471,7 +457,6 @@ Debido a que estos atributos no cumplen la condición de normalidad tal y como s
 # Calculamos la matriz de correlaciones
 data.cor = cor(data_filt[sapply(data_filt, is.numeric)], method = c("spearman"))
 data.cor
-
 # Visualizamos la matriz de correlaciones
 corrplot(data.cor)
 ```
@@ -495,34 +480,24 @@ Nuevamente, es necesario hacer referencia a la necesidad de aplicar un test no  
 
 Como se parte del supuesto establecido en el que los datos no presentan una distribución normal, las hipótesis planteadas se hacen en base a las medianas $Me$.
 
-
-*Hipótesis nula y alternativa
+* Hipótesis nula y alternativa:
 
 H~0~ : $Me$~F~ = $Me$~M~ <br/>
 H~1~ : $Me$~F~ $\neq$ $Me$~M~ <br/>
 
 Este caso se trata de un contraste bilateral para la hipótesis alternativa planteada.
-
-
 ```{r, eval=TRUE, echo=TRUE}
 testU <- wilcox.test(price_male, price_female, alternative = "two.sided", paired = FALSE, exact = FALSE, conf.level = 0.95)
 testU
 ```
-
 Se puede observar que el p-valor obtenido tras la aplicación del test es inferior al nivel de significación por defecto de $\alpha$ = 0.05. Es por ello que se puede concluir que se rechaza la hipótesis nula H~0~, es decir, sí que existirían diferencias significativas en los precios de los billetes dependiendo del sexo del pasajero.
-
 Rápidamente, es posible calcular rápidamente los precios medios de los billetes dependiendo de si el pasajero era una mujer o un hombre.
-
-
 ```{r}
 mean_price_male <- mean(price_male)
 mean_price_female <- mean(price_female)
-
 data_price <- data.frame("Sexo" = c("Hombre","Mujer"),"Precio medio del billete" = c(mean_price_male,mean_price_female), check.names=FALSE)
-
 data_price %>% kable() %>% kable_styling()
 ```
-
 Efectivamente se puede comprobar como el precio medio del billete en el caso de que fuese adquirido por una mujer es aproximadamente un 74% más caro que en el caso de que fuese adquirido por un hombre.
 
 ***
@@ -538,13 +513,12 @@ A continuación, conviene estudiar la probabilidad de que un pasajero sobrevisie
 
 Para ello se crearán las siguientes variables de referencia:
 
-+**Pclass** = _3_
-+**Sex** = _male_
-+**Embarked** = _S_ 
++ **Pclass** = _3_
++ **Sex** = _male_
++ **Embarked** = _S_ 
 
 ```{r}
 data_filt$Survived = data_filt$Survived == 1
-
 data_filt$PclassR = relevel(data_filt$Pclass, ref = '3')
 data_filt$SexR = relevel(data_filt$Sex, ref = 'male')
 data_filt$EmbarkedR = relevel(data_filt$Embarked, ref = 'S')
@@ -554,13 +528,9 @@ Una vez creados los atributos de referencia, se procede a generar los distintos 
 
 ```{r}
 mod.Log1 = glm(Survived ~ PclassR + SexR, family=binomial, data = data_filt)
-
 mod.Log2 = glm(Survived ~ PclassR + EmbarkedR, family=binomial, data = data_filt)
-
 mod.Log3 = glm(Survived ~ SexR + EmbarkedR, family=binomial, data = data_filt)
-
 mod.Log4 = glm(Survived ~ PclassR + SexR + EmbarkedR, family=binomial, data = data_filt)
-
 summary(mod.Log1)
 summary(mod.Log2)
 summary(mod.Log3)
@@ -575,9 +545,7 @@ aic1 <- mod.Log1$aic
 aic2 <- mod.Log2$aic
 aic3 <- mod.Log3$aic
 aic4 <- mod.Log4$aic
-
 data_AIC <- data.frame("Modelo Regresión Logística" = c("PclassR + SexR","PclassR + EmbarkedR", "SexR + EmbarkedR", "PclassR + SexR + EmbarkedR"), "Valor AIC" = c(aic1,aic2,aic3,aic4), check.names=FALSE)
-
 data_AIC %>% kable() %>% kable_styling()
 ```
 
@@ -597,7 +565,6 @@ Para concluir, se estudiará la calidad del ajuste, calculando la de confusión 
 
 ```{r}
 data_filt$SurvivedP= predict(mod.Log4, data_filt, type="response")
-
 data_filt$SurvivedP <- ifelse(data_filt$SurvivedP > 0.7,1,0)
 table(data_filt$SurvivedP, data_filt$SurvivedP)
 ```
@@ -615,8 +582,6 @@ A continuación se realizará un análisis visual a partir de tablas y gráficos
 ```{r warning=FALSE}
 nrows = dim(data_filt)
 ggplot(data = data_filt[1:nrows,], aes(x = Sex, fill = Survived)) + geom_bar() + scale_fill_brewer(palette="Set1") + ylab("Survival count") + theme_minimal()
-
-
 ggplot(data = data_filt[1:nrows,], aes(x = Sex, fill = Survived)) + geom_bar(position = "fill") + scale_fill_brewer(palette="Set1") + ylab("Survival rate") + theme_minimal()
 ```
 
@@ -628,7 +593,6 @@ En las siguientes gráficas se muestra la relación entre las variables **Surviv
 
 ```{r warning=FALSE}
 ggplot(data = data_filt[1:nrows,], aes(x = Pclass, fill = Survived)) + geom_bar(position = "fill") + ylab("Survival rate") + scale_fill_brewer(palette="Set1") + theme_minimal()
-
 ggplot(data = data_filt[1:nrows,], aes(x = Embarked, fill = Survived)) + geom_bar(position = "fill") + ylab("Survival rate") + facet_wrap(~Pclass, strip.position = "bottom") + scale_fill_brewer(palette="Set1") + theme_minimal()
 ```
 
@@ -651,7 +615,6 @@ A continuación se analiza el porcentaje pasajeros que sobrevivieron al accident
 ```{r warning=FALSE}
 # Se crea una nueva variable que refleje el tamaño de la familia
 data_filt$FamilySize <- data_filt$SibSp + data_filt$Parch + 1
-
 ggplot(data = data_filt[!is.na(data_filt[1:nrows,]$FamilySize),], aes(x = FamilySize, fill = Survived)) + geom_histogram(binwidth=2, position = "fill") + ylab("Survival rate") + scale_fill_brewer(palette="Set1") + theme_minimal()
 ```
 
